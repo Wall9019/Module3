@@ -67,21 +67,24 @@
                 };
             }
 
-            MenuSearchService.$inject = ['$http'];
-            function MenuSearchService($http) {
+            function MenuSearchService() {
                 var service = this;
 
+                // Mock data for testing
+                var items = [
+                    { name: "Chicken Sandwich", short_name: "CS", description: "Delicious grilled chicken sandwich." },
+                    { name: "Beef Burger", short_name: "BB", description: "Juicy beef burger with lettuce and tomato." },
+                    { name: "Veggie Wrap", short_name: "VW", description: "Healthy veggie wrap with fresh ingredients." },
+                    { name: "Spaghetti", short_name: "SP", description: "Classic spaghetti with marinara sauce." },
+                    { name: "Caesar Salad", short_name: "CSL", description: "Fresh Caesar salad with croutons." }
+                ];
+
                 service.getMatchedMenuItems = function (searchTerm) {
-                    return $http({
-                        method: "GET",
-                        url: "https://coursera-jhu-default-rtdb.firebaseio.com/menu_items.json"
-                    }).then(function (response) {
-                        var items = response.data.menu_items;
+                    return new Promise(function (resolve) {
                         var foundItems = items.filter(function (item) {
                             return item.description.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1;
                         });
-
-                        return foundItems;
+                        resolve(foundItems);
                     });
                 };
             }
