@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="NarrowItDownApp">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Narrow It Down</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container mt-4" ng-controller="NarrowItDownController as ctrl">
+        <h1 class="text-center">Narrow Down Your Menu Search!</h1>
+        <div class="form-group row mt-4">
+            <div class="col-md-9">
+                <input type="text" class="form-control" placeholder="Search term" ng-model="ctrl.searchTerm">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary btn-block" ng-click="ctrl.narrowItDown()">Narrow It Down For Me!</button>
+            </div>
+        </div>
+
+        <div ng-if="ctrl.message" class="text-danger text-center mt-3">
+            {{ ctrl.message }}
+        </div>
+
+        <div class="list-group mt-4">
+            <div class="list-group-item" ng-repeat="item in ctrl.found">
+                <span><strong>{{ item.name }}</strong> ({{ item.short_name }}): {{ item.description }}</span>
+                <button class="btn btn-danger btn-sm float-right" ng-click="ctrl.removeItem($index)">Don't want this one!</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            angular.module('NarrowItDownApp', [])
+                .controller('NarrowItDownController', NarrowItDownController)
+                .service('MenuSearchService', MenuSearchService);
+
+            NarrowItDownController.$inject = ['MenuSearchService'];
+            function NarrowItDownController(MenuSearchService) {
+                var ctrl = this;
+                ctrl.searchTerm = "";
+                ctrl.found = [];
+                ctrl.message = "";
+
+                ctrl.narrowItDown = function () {
+                    if (!ctrl.searchTerm) {
+                        ctrl.message = "Nothing found";
+                        ctrl.found = [];
+                        return;
+                    }
+
+                    MenuSearchService.getMatchedMenuItems(ctrl.searchTerm)
+                        .then(function (result) {
+                            ctrl.found = result;
+                            ctrl.message = result.length === 0 ? "Nothing found" : "";
+                        });
+                };
+
+                ctrl.removeItem = function (index) {
+                    ctrl.found.splice(index, 1);
+                };
+            }
+
+            MenuSearchService.$inject = ['$http'];
+            function MenuSearchService($http) {
+                var service = this;
+
+                service.getMatchedMenuItems = function (searchTerm) {
+                    return $http({
+                        method: "GET",
+                        url: "https://coursera-jhu-default-rtdb.firebaseio.com/menu_items.json"
+                    }).then(function (response) {
+                        var items = response.data.menu_items;
+                        var foundItems = items.filter(function (item) {
+                            return item.description.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1;
+                        });
+
+                        return foundItems;
+                    });
+                };
+            }
+        })();
+    </script>
+</body>
+
+</html>
